@@ -15,47 +15,26 @@
  */
 
 var apigClientFactory = {};
+
 apigClientFactory.newClient = function (config) {
-    var apigClient = { };
-    if(config === undefined) {
-        config = {
-            accessKey: '',
-            secretKey: '',
-            sessionToken: '',
-            region: '',
-            apiKey: undefined,
-            defaultContentType: 'application/json',
-            defaultAcceptType: 'application/json'
-        };
-    }
-    if(config.accessKey === undefined) {
-        config.accessKey = '';
-    }
-    if(config.secretKey === undefined) {
-        config.secretKey = '';
-    }
-    if(config.apiKey === undefined) {
-        config.apiKey = '';
-    }
-    if(config.sessionToken === undefined) {
-        config.sessionToken = '';
-    }
-    if(config.region === undefined) {
-        config.region = 'YOUR_PRIMARY_AWS_REGION';
-    }
-    //If defaultContentType is not defined then default to application/json
-    if(config.defaultContentType === undefined) {
-        config.defaultContentType = 'application/json';
-    }
-    //If defaultAcceptType is not defined then default to application/json
-    if(config.defaultAcceptType === undefined) {
-        config.defaultAcceptType = 'application/json';
+    var apigClient = {};
+
+    if (config === undefined) {
+        config = {};
     }
 
+    config.accessKey = config.accessKey || '';
+    config.secretKey = config.secretKey || '';
+    config.sessionToken = config.sessionToken || '';
+    config.region = config.region || 'YOUR_PRIMARY_AWS_REGION';
+    config.apiKey = config.apiKey || '';
+    config.defaultContentType = config.defaultContentType || 'application/json';
+    config.defaultAcceptType = config.defaultAcceptType || 'application/json';
+
     // extract endpoint and path from url
-    let invokeUrl = `https://${window.config.restApiId}.execute-api.${window.config.region}.amazonaws.com/prod`,
-        endpoint = /(^https?:\/\/[^\/]+)/g.exec(invokeUrl)[1],
-        pathComponent = invokeUrl.substring(endpoint.length)
+    var invokeUrl = 'https://' + window.config.restApiId + '.execute-api.' + window.config.region + '.amazonaws.com/prod';
+    var endpoint = /(^https?:\/\/[^\/]+)/g.exec(invokeUrl)[1];
+    var pathComponent = invokeUrl.substring(endpoint.length);
 
     var sigV4ClientConfig = {
         accessKey: config.accessKey,
@@ -69,7 +48,12 @@ apigClientFactory.newClient = function (config) {
     };
 
     var authType = 'NONE';
-    if (sigV4ClientConfig.accessKey !== undefined && sigV4ClientConfig.accessKey !== '' && sigV4ClientConfig.secretKey !== undefined && sigV4ClientConfig.secretKey !== '') {
+    if (
+        sigV4ClientConfig.accessKey !== undefined &&
+        sigV4ClientConfig.accessKey !== '' &&
+        sigV4ClientConfig.secretKey !== undefined &&
+        sigV4ClientConfig.secretKey !== ''
+    ) {
         authType = 'AWS_IAM';
     }
 
@@ -79,34 +63,37 @@ apigClientFactory.newClient = function (config) {
         defaultAcceptType: config.defaultAcceptType
     };
 
-    var apiGatewayClient = apiGateway.core.apiGatewayClientFactory.newClient(simpleHttpClientConfig, sigV4ClientConfig);
-
-
+    var apiGatewayClient = apiGateway.core.apiGatewayClientFactory.newClient(
+        simpleHttpClientConfig,
+        sigV4ClientConfig
+    );
 
     apigClient.rootOptions = function (params, body, additionalParams) {
-        if(additionalParams === undefined) { additionalParams = {}; }
+        if (additionalParams === undefined) {
+            additionalParams = {};
+        }
 
         apiGateway.core.utils.assertParametersDefined(params, [], ['body']);
 
         var rootOptionsRequest = {
-            verb: 'options'.toUpperCase(),
+            verb: 'OPTIONS',
             path: pathComponent + uritemplate('/').expand(apiGateway.core.utils.parseParametersToObject(params, [])),
             headers: apiGateway.core.utils.parseParametersToObject(params, []),
             queryParams: apiGateway.core.utils.parseParametersToObject(params, []),
             body: body
         };
 
-
         return apiGatewayClient.makeRequest(rootOptionsRequest, authType, additionalParams, config.apiKey);
     };
 
-
     apigClient.get = function (path, params, body, additionalParams) {
-        if(additionalParams === undefined) { additionalParams = {}; }
+        if (additionalParams === undefined) {
+            additionalParams = {};
+        }
 
         apiGateway.core.utils.assertParametersDefined(params, [], ['body']);
 
-        var proxyOptionsRequest = {
+        var getRequest = {
             verb: 'GET',
             path: pathComponent + path,
             headers: apiGateway.core.utils.parseParametersToObject(params, []),
@@ -114,15 +101,17 @@ apigClientFactory.newClient = function (config) {
             body: body
         };
 
-        return apiGatewayClient.makeRequest(proxyOptionsRequest, authType, additionalParams, config.apiKey);
+        return apiGatewayClient.makeRequest(getRequest, authType, additionalParams, config.apiKey);
     };
 
     apigClient.post = function (path, params, body, additionalParams) {
-        if(additionalParams === undefined) { additionalParams = {}; }
+        if (additionalParams === undefined) {
+            additionalParams = {};
+        }
 
         apiGateway.core.utils.assertParametersDefined(params, [], ['body']);
 
-        var proxyOptionsRequest = {
+        var postRequest = {
             verb: 'POST',
             path: pathComponent + path,
             headers: apiGateway.core.utils.parseParametersToObject(params, []),
@@ -130,16 +119,17 @@ apigClientFactory.newClient = function (config) {
             body: body
         };
 
-
-        return apiGatewayClient.makeRequest(proxyOptionsRequest, authType, additionalParams, config.apiKey);
+        return apiGatewayClient.makeRequest(postRequest, authType, additionalParams, config.apiKey);
     };
 
     apigClient.put = function (path, params, body, additionalParams) {
-        if(additionalParams === undefined) { additionalParams = {}; }
+        if (additionalParams === undefined) {
+            additionalParams = {};
+        }
 
         apiGateway.core.utils.assertParametersDefined(params, [], ['body']);
 
-        var proxyOptionsRequest = {
+        var putRequest = {
             verb: 'PUT',
             path: pathComponent + path,
             headers: apiGateway.core.utils.parseParametersToObject(params, []),
@@ -147,16 +137,17 @@ apigClientFactory.newClient = function (config) {
             body: body
         };
 
-
-        return apiGatewayClient.makeRequest(proxyOptionsRequest, authType, additionalParams, config.apiKey);
+        return apiGatewayClient.makeRequest(putRequest, authType, additionalParams, config.apiKey);
     };
 
     apigClient.delete = function (path, params, body, additionalParams) {
-        if(additionalParams === undefined) { additionalParams = {}; }
+        if (additionalParams === undefined) {
+            additionalParams = {};
+        }
 
         apiGateway.core.utils.assertParametersDefined(params, [], ['body']);
 
-        var proxyOptionsRequest = {
+        var deleteRequest = {
             verb: 'DELETE',
             path: pathComponent + path,
             headers: apiGateway.core.utils.parseParametersToObject(params, []),
@@ -164,10 +155,8 @@ apigClientFactory.newClient = function (config) {
             body: body
         };
 
-
-        return apiGatewayClient.makeRequest(proxyOptionsRequest, authType, additionalParams, config.apiKey);
+        return apiGatewayClient.makeRequest(deleteRequest, authType, additionalParams, config.apiKey);
     };
-
 
     return apigClient;
 };
